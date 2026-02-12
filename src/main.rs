@@ -41,6 +41,19 @@ enum GameState {
     GameOver,
 }
 
+/// 游戏进行中状态枚举
+/// 定义游戏进行中的不同状态，用于状态管理
+#[derive(States, Debug, Clone, Copy, Eq, PartialEq, Hash, Default)]
+enum PlayingState {
+    /// 初始小球附着在挡板上
+    #[default]
+    ball_attached,
+    /// 发射后游戏进行中状态
+    ball_launched,
+}
+
+
+
 /// 程序入口函数
 /// 这个函数负责初始化并运行Bevy游戏引擎的应用程序
 fn main() {
@@ -48,13 +61,7 @@ fn main() {
         .add_plugins(DefaultPlugins)  // 添加默认插件，提供基础功能
         // 初始化游戏状态
         .init_state::<GameState>()
-        // 添加步进调试插件
-        // .add_plugins(
-        //     stepping::SteppingPlugin::default()  // 使用默认配置创建步进调试插件
-        //         .add_schedule(Update)  // 将步进功能添加到Update调度中
-        //         .add_schedule(FixedUpdate)  // 将步进功能添加到FixedUpdate调度中
-        //         .at(percent(35), percent(50)),  // 设置步进调试的触发位置在35%到50%之间
-        // )
+        .init_state::<PlayingState>()   
         .insert_resource(Score(0))  // 初始化分数资源为0
         .insert_resource(ClearColor(BACKGROUND_COLOR))  // 设置背景颜色
         
@@ -65,13 +72,18 @@ fn main() {
         
         // ===== 游戏进行中状态系统 =====
         .add_systems(OnEnter(GameState::Playing), setup_game)
+        .add_systems(Update,(update_scoreboard, check_for_collisions)
+                .run_if(in_state(GameState::Playing)
+                .and(in_state(PlayingState::ball_launched))))
         .add_systems(
             FixedUpdate,  // 使用固定时间步长运行系统
-            (move_paddle, move_attached_ball, apply_velocity, check_for_collisions)
+            (move_paddle,  apply_velocity)
                 .run_if(in_state(GameState::Playing))
                 .chain(),
         )
-        .add_systems(Update, (update_scoreboard, handle_ball_launch, update_hint_visibility).run_if(in_state(GameState::Playing)))
+        .add_systems(Update, (move_attached_ball, handle_ball_launch, update_hint_visibility)
+                .run_if(in_state(GameState::Playing)
+                .and(in_state(PlayingState::ball_attached))))
         .add_observer(play_collision_sound)
         
         .run();  // 运行应用程序
@@ -316,6 +328,7 @@ fn handle_ball_launch(
     mut commands: Commands,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     ball_query: Query<(Entity, &Transform), With<BallAttached>>,
+    mut next_state: ResMut<NextState<PlayingState>>,
 ) {
     // 检测上方向键是否被按下
     if keyboard_input.just_pressed(KeyCode::ArrowUp) {
@@ -324,6 +337,8 @@ fn handle_ball_launch(
             commands.entity(ball_entity).remove::<BallAttached>();
             commands.entity(ball_entity).insert(Velocity(Vec2::new(0.0, BALL_SPEED)));
         }
+        // 切换到游戏进行中状态
+        next_state.set(PlayingState::ball_launched);
     }
 }
 
@@ -379,6 +394,7 @@ fn check_for_collisions(
     paddle_query: Query<&Transform, With<Paddle>>,
 ) {
     // 解包小球的速度（可变）和位置组件
+    //into_inner() 的作用：将 Bevy Query 返回的 “结果包装类型”转换为直接可操作的引用 / 值，确保单个
     let (mut ball_velocity, ball_transform) = ball_query.into_inner();
 
     // 遍历所有碰撞体（墙、球拍、砖块）
