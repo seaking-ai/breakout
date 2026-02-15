@@ -31,7 +31,7 @@
 ### 运行命令
 ```bash
 # 克隆仓库
-git clone <你的仓库地址>
+git clone https://github.com/seaking-ai/breakout.git
 cd breakout
 
 # 运行游戏
