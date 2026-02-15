@@ -61,6 +61,15 @@ pub const SCOREBOARD_FONT_SIZE: f32 = 33.0;
 /// 记分板文本内边距
 pub const SCOREBOARD_TEXT_PADDING: Val = Val::Px(5.0);
 
+/// 生命指示器图标大小（与小球直径相同）
+pub const LIFE_INDICATOR_SIZE: f32 = 20.0;
+/// 生命指示器之间的间距
+pub const LIFE_INDICATOR_GAP: f32 = 10.0;
+/// 生命指示器区域距离屏幕右边缘的内边距
+pub const LIVES_UI_PADDING: Val = Val::Px(10.0);
+/// 生命指示器区域距离屏幕顶部的内边距
+pub const LIVES_UI_TOP_PADDING: Val = Val::Px(10.0);
+
 // ==================== 颜色配置 ====================
 
 /// 背景颜色 - 接近白色的浅灰色

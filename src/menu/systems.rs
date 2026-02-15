@@ -4,7 +4,7 @@
 
 use bevy::prelude::*;
 use super::{constants, MenuButton};
-use crate::GameState;  // 引用主程序定义的游戏状态
+use crate::state::GameState;  // 引用主程序定义的游戏状态
 
 /// 菜单UI根节点标记组件
 /// 用于后续清理菜单时识别菜单相关实体
@@ -19,9 +19,8 @@ pub struct MenuRoot;
 /// 
 /// # 说明
 /// 创建菜单界面，包含标题和开始游戏按钮
+/// 注意：相机在应用启动时已经创建，此处不再重复创建
 pub fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // 生成2D相机，用于渲染菜单UI
-    commands.spawn(Camera2d);
 
     // 菜单容器（垂直布局）- Bevy 0.18 使用 Node 组件替代 NodeBundle
     //Node 是 Bevy UI 中最基础的布局容器组件，用于控制元素的尺寸、排列方式等核心布局属性：
@@ -134,8 +133,8 @@ pub fn handle_menu_input(
             }
             // 鼠标点击
             Interaction::Pressed => {
-                // 切换到游戏状态
-                next_state.set(GameState::Playing);
+                // 切换到关卡选择状态
+                next_state.set(GameState::LevelSelect);
             }
             // 无交互
             Interaction::None => {

@@ -1,40 +1,28 @@
 use bevy::prelude::*;
 use crate::config::*;
-/// 挡板组件标记
-#[derive(Component)]
-pub struct Paddle;
 
-/// 球组件标记
-#[derive(Component)]
-pub struct Ball;
+// 存放组件，枚举等
 
-/// 小球是否附着在挡板上
-#[derive(Component)]
-pub struct BallAttached;
+/// 事件模块，定义游戏中的事件
+mod event;
+pub use event::*;
 
-/// 游戏提示UI组件标记
-#[derive(Component)]
-pub struct GameHintUi;
+/// 音频模块，定义游戏中的音频资源
+mod audio;
+pub use audio::*;
 
+/// 资源模块，定义游戏中的资源
+mod resource;
+pub use resource::*;
 
+/// 标记模块，定义游戏中的组件标记
+mod mark;
+pub use mark::*;
 
 /// 速度组件，存储2D速度向量
 #[derive(Component, Deref, DerefMut)]
 pub struct Velocity(pub Vec2);
 
-
-
-/// 碰撞事件，当球发生碰撞时触发
-#[derive(Event)]
-pub struct BallCollided;
-
-/// 砖块组件标记
-#[derive(Component)]
-pub struct Brick;
-
-/// 碰撞音效资源
-#[derive(Resource, Deref)]
-pub struct CollisionSound(pub Handle<AudioSource>);
 
 /// 碰撞器组件，用于碰撞检测
 // 必须实现Default才能作为Wall的必需组件
@@ -47,7 +35,7 @@ pub struct Collider;
 pub struct Wall;
 
 /// 墙壁位置枚举，表示墙壁在游戏区域的哪一侧
-#[derive(Component)]
+#[derive(Component, Clone, Copy)]
 pub enum WallLocation {
     Left,   // 左侧
     Right,  // 右侧
@@ -99,9 +87,10 @@ impl WallLocation {
 impl Wall {
     /// 构建器方法，用于创建墙壁实体
     // 注意Sprite和Transform与Wall一起使用，覆盖必需组件的默认值
-    pub fn new(location: WallLocation) -> (Wall, Sprite, Transform) {
+    pub fn new(location: WallLocation) -> (Wall, WallLocation, Sprite, Transform) {
         (
             Wall,                                    // 创建Wall组件实例
+            location,                                // 创建WallLocation组件，用于识别墙壁位置
             Sprite::from_color(WALL_COLOR, Vec2::ONE), // 创建带有指定颜色和默认大小的精灵组件
             Transform {                             // 创建变换组件，定义墙壁的位置和大小
                 // 将Vec2转换为Vec3，需要添加z坐标
@@ -116,10 +105,13 @@ impl Wall {
     }
 }
 
-/// 分数资源，跟踪游戏得分
-#[derive(Resource, Deref, DerefMut)]
-pub struct Score(pub usize);
+/// 碰撞方向枚举
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum Collision {
+    Left,   // 左侧碰撞
+    Right,  // 右侧碰撞
+    Top,    // 顶部碰撞
+    Bottom, // 底部碰撞
+}
 
-/// 记分板UI组件标记
-#[derive(Component)]
-pub struct ScoreboardUi;
+
